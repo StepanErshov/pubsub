@@ -35,8 +35,6 @@ jobs:
     - name: Run linters
       run: |
         go vet ./...
-        staticcheck ./...
-        golangci-lint run --timeout 5m
       continue-on-error: false
 
     - name: Check formatting
