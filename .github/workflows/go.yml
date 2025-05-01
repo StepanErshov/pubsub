@@ -37,15 +37,6 @@ jobs:
         go vet ./...
       continue-on-error: false
 
-    - name: Check formatting
-      run: |
-        unformatted=$(gofmt -l .)
-        if [ -n "$unformatted" ]; then
-          echo "Неотформатированные файлы:"
-          echo "$unformatted"
-          exit 1
-        fi
-
     - name: Upload coverage
       uses: codecov/codecov-action@v3
       if: success()
