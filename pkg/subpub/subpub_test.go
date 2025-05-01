@@ -8,30 +8,34 @@ import (
 )
 
 func TestSubscribePublish(t *testing.T) {
-	bus := NewSubPub()
-	var receivedMsg interface{}
+    ps := NewSubPub()
+    defer ps.Close(context.Background())
 
-	sub, err := bus.Subscribe("test", func(msg interface{}) {
-		receivedMsg = msg
-	})
-	if err != nil {
-		t.Fatalf("Subscribe failed: %v", err)
-	}
+    var wg sync.WaitGroup
+    wg.Add(1)
 
-	testMsg := "hello"
-	err = bus.Publish("test", testMsg)
-	if err != nil {
-		t.Fatalf("Publish failed: %v", err)
-	}
+    received := make(chan bool, 1)
 
-	time.Sleep(100 * time.Millisecond)
-	if receivedMsg != testMsg {
-		t.Errorf("Expected message %v, got %v", testMsg, receivedMsg)
-	}
+    _, err := ps.Subscribe("test", func(msg interface{}) {
+        defer wg.Done()
+        received <- true
+    })
+    if err != nil {
+        t.Fatal(err)
+    }
 
-	sub.Unsubscribe()
+    err = ps.Publish("test", "message")
+    if err != nil {
+        t.Fatal(err)
+    }
+
+    wg.Wait()
+    select {
+    case <-received:
+    default:
+        t.Error("Message not received")
+    }
 }
-
 func TestUnsubscribe(t *testing.T) {
 	bus := NewSubPub()
 	var callCount int

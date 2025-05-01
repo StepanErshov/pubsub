@@ -22,6 +22,7 @@ type subscription struct {
 	handler  MessageHandler
 	messages chan interface{}
 	bus      *subPubImpl
+	once     sync.Once
 }
 
 func (s *subscription) Unsubscribe() {
@@ -33,6 +34,7 @@ type subPubImpl struct {
 	subscribers map[string][]*subscription
 	closed      bool
 	wg          sync.WaitGroup
+	closeOnce   sync.Once
 }
 
 func NewSubPub() SubPub {
@@ -86,7 +88,6 @@ func (b *subPubImpl) Publish(subject string, msg interface{}) error {
 		select {
 		case sub.messages <- msg:
 		default:
-			// Skip if subscriber's channel is full to prevent blocking
 		}
 	}
 
@@ -94,56 +95,63 @@ func (b *subPubImpl) Publish(subject string, msg interface{}) error {
 }
 
 func (b *subPubImpl) unsubscribe(sub *subscription) {
-	b.mu.Lock()
-	defer b.mu.Unlock()
+	sub.once.Do(func() {
+		b.mu.Lock()
+		defer b.mu.Unlock()
 
-	subs, ok := b.subscribers[sub.subject]
-	if !ok {
-		return
-	}
-
-	for i, s := range subs {
-		if s == sub {
-			b.subscribers[sub.subject] = append(subs[:i], subs[i+1:]...)
-			close(sub.messages)
-			break
+		subs, ok := b.subscribers[sub.subject]
+		if !ok {
+			return
 		}
-	}
 
-	if len(b.subscribers[sub.subject]) == 0 {
-		delete(b.subscribers, sub.subject)
-	}
+		for i, s := range subs {
+			if s == sub {
+				b.subscribers[sub.subject] = append(subs[:i], subs[i+1:]...)
+				close(sub.messages)
+				break
+			}
+		}
+
+		if len(b.subscribers[sub.subject]) == 0 {
+			delete(b.subscribers, sub.subject)
+		}
+	})
 }
 
 func (b *subPubImpl) Close(ctx context.Context) error {
-	b.mu.Lock()
-	if b.closed {
+	var err error
+	b.closeOnce.Do(func() {
+		b.mu.Lock()
+		b.closed = true
+		subsCopy := make(map[string][]*subscription)
+		for k, v := range b.subscribers {
+			subs := make([]*subscription, len(v))
+			copy(subs, v)
+			subsCopy[k] = subs
+		}
+		b.subscribers = nil
 		b.mu.Unlock()
-		return nil
-	}
-	b.closed = true
 
-	var allSubs []*subscription
-	for _, subs := range b.subscribers {
-		allSubs = append(allSubs, subs...)
-	}
-	b.subscribers = nil
-	b.mu.Unlock()
+		for _, subs := range subsCopy {
+			for _, sub := range subs {
+				sub.once.Do(func() {
+					close(sub.messages)
+				})
+			}
+		}
 
-	for _, sub := range allSubs {
-		close(sub.messages)
-	}
+		done := make(chan struct{})
+		go func() {
+			b.wg.Wait()
+			close(done)
+		}()
 
-	done := make(chan struct{})
-	go func() {
-		b.wg.Wait()
-		close(done)
-	}()
-
-	select {
-	case <-done:
-		return nil
-	case <-ctx.Done():
-		return ctx.Err()
-	}
+		select {
+		case <-done:
+			err = nil
+		case <-ctx.Done():
+			err = ctx.Err()
+		}
+	})
+	return err
 }
