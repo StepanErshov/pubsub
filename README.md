@@ -128,8 +128,8 @@ _, err := client.Publish(ctx, &pb.PublishRequest{
 ## Визуализация работы системы
 
 <div style="display: flex; justify-content: space-between;"> 
-  <img src="pictures/image.png" alt="Архитектурная схема" width="48%"> 
-  <img src="pictures/image1.png" alt="Последовательность работы" width="48%"> 
+  <img src="pictures/image.png" alt="Работа сервера" width="60%"> 
+  <img src="pictures/image1.png" alt="Тесты" width="50%"> 
 </div>
 
 
