@@ -2,13 +2,14 @@ package service
 
 import (
 	"context"
-
-	"github.com/rs/zerolog/log"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
-	"github.com/StepanErshov/pubsub/pkg/subpub"
-	pb "github.com/StepanErshov/pubsub/pkg/pb"
+    "github.com/rs/zerolog/log"
+    "google.golang.org/grpc"
+    "google.golang.org/grpc/codes"
+    "google.golang.org/grpc/status"
+    "google.golang.org/protobuf/types/known/emptypb"
+    
+    "github.com/StepanErshov/pubsub/pkg/pb"
+    "github.com/StepanErshov/pubsub/pkg/subpub"
 )
 
 type PubSubService struct {
@@ -21,7 +22,8 @@ func NewPubSubService(bus subpub.SubPub) *PubSubService {
 }
 
 func (s *PubSubService) Register(server *grpc.Server) {
-	pb.RegisterPubSubServer(server, s)
+    pb.RegisterPubSubServer(server, s)
+    log.Info().Msg("PubSub service registered")
 }
 
 func (s *PubSubService) Subscribe(req *pb.SubscribeRequest, stream pb.PubSub_SubscribeServer) error {
