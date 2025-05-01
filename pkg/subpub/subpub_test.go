@@ -24,7 +24,7 @@ func TestSubscribePublish(t *testing.T) {
 		t.Fatalf("Publish failed: %v", err)
 	}
 
-	time.Sleep(100 * time.Millisecond) // Give time for message to be processed
+	time.Sleep(100 * time.Millisecond)
 	if receivedMsg != testMsg {
 		t.Errorf("Expected message %v, got %v", testMsg, receivedMsg)
 	}
@@ -72,12 +72,10 @@ func TestSlowSubscriber(t *testing.T) {
 	fastDone := make(chan struct{})
 	slowDone := make(chan struct{})
 
-	// Fast subscriber
 	_, _ = bus.Subscribe("test", func(msg interface{}) {
 		close(fastDone)
 	})
 
-	// Slow subscriber
 	_, _ = bus.Subscribe("test", func(msg interface{}) {
 		time.Sleep(500 * time.Millisecond)
 		close(slowDone)
@@ -87,14 +85,14 @@ func TestSlowSubscriber(t *testing.T) {
 
 	select {
 	case <-fastDone:
-		// Expected
+
 	case <-time.After(100 * time.Millisecond):
 		t.Error("Fast subscriber blocked by slow one")
 	}
 
 	select {
 	case <-slowDone:
-		// Expected
+
 	case <-time.After(600 * time.Millisecond):
 		t.Error("Slow subscriber didn't complete")
 	}

@@ -21,24 +21,20 @@ import (
 func main() {
 	configureLogger()
 	log.Info().Msg("=== SERVER STARTING ===")
-	// Load config
+
 	cfg, err := config.Load("config.yaml")
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to load config")
 	}
 
-	// Setup logger
 	setLogLevel(cfg.Log.Level)
 
-	// Create pubsub bus
 	bus := subpub.NewSubPub()
 	defer bus.Close(context.Background())
 
-	// Create gRPC server
 	grpcServer := grpc.NewServer()
 	service.NewPubSubService(bus).Register(grpcServer)
 
-	// Start server
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.GRPC.Port))
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to listen")
@@ -59,7 +55,7 @@ func main() {
     <-sigChan
     
     log.Info().Msg("Shutting down")
-	// Graceful shutdown
+
 	waitForShutdown(grpcServer, cfg.GRPC.ShutdownTimeout)
 	log.Info().Str("address", lis.Addr().String()).Msg("Server listening on port")
     log.Info().Msg("=== SERVER READY ===")
@@ -71,7 +67,7 @@ func configureLogger() {
         TimeFormat: time.RFC3339,
     }
     log.Logger = zerolog.New(output).With().Timestamp().Logger()
-    zerolog.SetGlobalLevel(zerolog.DebugLevel) // Включаем все логи
+    zerolog.SetGlobalLevel(zerolog.DebugLevel)
 }
 
 func waitForShutdown(server *grpc.Server, timeout time.Duration) {

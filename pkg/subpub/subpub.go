@@ -5,11 +5,9 @@ import (
 	"sync"
 )
 
-// MessageHandler is a callback function that processes messages delivered to subscribers
 type MessageHandler func(msg interface{})
 
 type Subscription interface {
-	// Unsubscribe will remove interest in the current subject subscription
 	Unsubscribe()
 }
 
@@ -54,7 +52,7 @@ func (b *subPubImpl) Subscribe(subject string, cb MessageHandler) (Subscription,
 	sub := &subscription{
 		subject:  subject,
 		handler:  cb,
-		messages: make(chan interface{}, 100), // Buffered channel to prevent blocking publishers
+		messages: make(chan interface{}, 100),
 		bus:      b,
 	}
 
@@ -106,7 +104,6 @@ func (b *subPubImpl) unsubscribe(sub *subscription) {
 
 	for i, s := range subs {
 		if s == sub {
-			// Remove the subscription
 			b.subscribers[sub.subject] = append(subs[:i], subs[i+1:]...)
 			close(sub.messages)
 			break
@@ -126,7 +123,6 @@ func (b *subPubImpl) Close(ctx context.Context) error {
 	}
 	b.closed = true
 
-	// Collect all subscriptions
 	var allSubs []*subscription
 	for _, subs := range b.subscribers {
 		allSubs = append(allSubs, subs...)
@@ -134,12 +130,10 @@ func (b *subPubImpl) Close(ctx context.Context) error {
 	b.subscribers = nil
 	b.mu.Unlock()
 
-	// Close all subscription channels
 	for _, sub := range allSubs {
 		close(sub.messages)
 	}
 
-	// Wait for all handlers to finish or context to be canceled
 	done := make(chan struct{})
 	go func() {
 		b.wg.Wait()
