@@ -129,7 +129,7 @@ _, err := client.Publish(ctx, &pb.PublishRequest{
 
 <div style="display: flex; justify-content: space-between;"> 
   <img src="pictures/image.png" alt="Работа сервера" width="60%"> 
-  <img src="pictures/image1.png" alt="Тесты" width="50%"> 
+  <img src="pictures/image1.png" alt="Тесты" width="60%"> 
 </div>
 
 
