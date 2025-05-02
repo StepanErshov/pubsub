@@ -26,6 +26,12 @@ jobs:
       run: go build -v ./...
       env:
         GOFLAGS: "-buildvcs=false"
+      
+    - name: Install linters
+      run: |
+        go install honnef.co/go/tools/cmd/staticcheck@latest
+        curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.55.2
+        golangci-lint --version
 
     # - name: Run tests
     #   run: |
