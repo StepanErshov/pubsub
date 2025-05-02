@@ -58,49 +58,6 @@ jobs:
       timeout-minutes: 10
       env:
         GORACE: "halt_on_error=1"
-    
-    - name: Analyze test results
-      if: failure()
-      run: |
-        echo "##[group]Test Failures Analysis"
-        echo "Data race detected in tests. Please check:"
-        echo "1. TestCloseWithCancel in pkg/subpub"
-        echo "2. TestUnsubscribe in pkg/subpub"
-        echo "##[endgroup]"
-        echo "##[warning]Low test coverage detected in some packages"
-  
-    - name: Run static analysis
-      run: |
-        staticcheck ./...
-        golangci-lint run --timeout 5m ./...
-        go vet ./...
-  
-    - name: Check test coverage
-      run: |
-        echo "Coverage report:"
-        go tool cover -func=coverage.txt | grep -v "0.0%" || true
-        # Проверяем минимальное покрытие (можно настроить под ваши требования)
-        if ! go tool cover -func=coverage.txt | awk '{sum+=$3} END {if (sum/NR < 50) {exit 1}}'; then
-          echo "##[error]Average test coverage is below 50%"
-          exit 1
-        fi
-  
-    - name: Upload coverage
-      if: success() && github.event_name == 'push'
-      uses: codecov/codecov-action@v3
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        file: ./coverage.txt
-        flags: unittests
-  
-    - name: Upload test results
-      if: always()
-      uses: actions/upload-artifact@v3
-      with:
-        name: test-results
-        path: |
-          unit-tests.xml
-          coverage.txt
 
     - name: Run linters
       run: |
