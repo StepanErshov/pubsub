@@ -96,14 +96,11 @@ server:
 
 ### Пример использования
   ```go
-  // Подписка
 stream, err := client.Subscribe(ctx, &pb.SubscribeRequest{Key: "test"})
 for {
     event, err := stream.Recv()
-    // обработка события
 }
 
-// Публикация
 _, err := client.Publish(ctx, &pb.PublishRequest{
     Key: "test",
     Data: "message",
