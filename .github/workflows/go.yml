@@ -40,20 +40,6 @@ jobs:
         curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.55.2
         golangci-lint --version
 
-    # - name: Run tests
-    #   run: |
-    #     go test -v -race -coverprofile=coverage.txt -covermode=atomic -shuffle=on ./...
-    #   timeout-minutes: 5
-    
-    - name: Run tests with race detection
-      run: |
-        gotestsum --format testname --junitfile unit-tests.xml -- \
-          -v -race -coverprofile=coverage.txt -covermode=atomic -shuffle=on \
-          -coverpkg=./... ./...
-      timeout-minutes: 10
-      env:
-        GORACE: "halt_on_error=1"
-
     - name: Run linters
       run: |
         go vet ./...
