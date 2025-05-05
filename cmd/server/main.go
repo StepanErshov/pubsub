@@ -58,7 +58,7 @@ func main() {
 
 	waitForShutdown(grpcServer, cfg.GRPC.ShutdownTimeout)
 	log.Info().Str("address", lis.Addr().String()).Msg("Server listening on port")
-	log.Info().Msg("=== SERVER READY ===")
+	log.Info().Msg("=== SERVER STOP ===")
 }
 
 func configureLogger() {
